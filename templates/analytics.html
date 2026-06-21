@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<h2><i class="fas fa-chart-line text-primary"></i> Step 5: Analytics & Top 20%</h2>
+<p class="text-muted">View all posts, find your top 20% performers, and double down.</p>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5>Add Dummy Analytics Data</h5>
+            <input id="postTitle" class="form-control mb-2" placeholder="Post Title" value="My LinkedIn Post">
+            <input id="impressions" class="form-control mb-2" placeholder="Impressions" value="1000">
+            <input id="clicks" class="form-control mb-2" placeholder="Clicks" value="50">
+            <input id="reactions" class="form-control mb-2" placeholder="Reactions" value="200">
+            <input id="comments" class="form-control mb-2" placeholder="Comments" value="30">
+            <button id="saveAnalyticsBtn" class="btn btn-primary w-100"><i class="fas fa-save"></i> Save Data</button>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5>Top 20% Performers</h5>
+            <div id="top20Result"><p class="text-muted">Add analytics data and refresh to see top performers.</p></div>
+            <button id="refreshAnalyticsBtn" class="btn btn-info w-100 mt-2"><i class="fas fa-sync"></i> Refresh Analytics</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('saveAnalyticsBtn').addEventListener('click', async function() {
+    const post_title = document.getElementById('postTitle').value;
+    const impressions = parseInt(document.getElementById('impressions').value) || 0;
+    const clicks = parseInt(document.getElementById('clicks').value) || 0;
+    const reactions = parseInt(document.getElementById('reactions').value) || 0;
+    const comments = parseInt(document.getElementById('comments').value) || 0;
+    this.disabled = true; this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    try {
+        await fetch('/api/save_analytics', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({post_title, impressions, clicks, reactions, comments})
+        });
+        alert('Data saved! Click "Refresh Analytics" to see top 20%.');
+    } catch(e) { alert('Error!'); }
+    this.disabled = false; this.innerHTML = '<i class="fas fa-save"></i> Save Data';
+});
+
+document.getElementById('refreshAnalyticsBtn').addEventListener('click', async function() {
+    this.disabled = true; this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    try {
+        const res = await fetch('/api/get_analytics');
+        const data = await res.json();
+        if (data.success) {
+            let html = '<h6>Top 20% Posts:</h6><ul class="list-group">';
+            if (data.top_20.length === 0) html += '<li class="list-group-item">No data yet. Add some analytics!</li>';
+            data.top_20.forEach(p => {
+                html += `<li class="list-group-item"><strong>${p.post_title}</strong> - Engagement: ${p.engagement_rate}%</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('top20Result').innerHTML = html;
+        }
+    } catch(e) { alert('Error!'); }
+    this.disabled = false; this.innerHTML = '<i class="fas fa-sync"></i> Refresh Analytics';
+});
+</script>
+{% endblock %}

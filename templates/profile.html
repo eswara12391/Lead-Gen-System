@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h2><i class="fas fa-user-edit text-primary"></i> Step 1: Optimize Your Profile</h2>
+<p class="text-muted">Enter your current details and let AI rewrite them for lead conversion.</p>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5>Current Profile</h5>
+            <textarea id="currentHeadline" class="form-control mb-2" placeholder="Current Headline">Marketing Expert</textarea>
+            <textarea id="currentAbout" class="form-control mb-2" rows="4" placeholder="Current About Section">I help businesses grow.</textarea>
+            <button id="optimizeBtn" class="btn btn-primary w-100"><i class="fas fa-magic"></i> Optimize with AI</button>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3 bg-light">
+            <h5>Optimized Results</h5>
+            <div id="resultArea"><p class="text-muted">Click "Optimize" to see the magic...</p></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('optimizeBtn').addEventListener('click', async function() {
+    const headline = document.getElementById('currentHeadline').value;
+    const about = document.getElementById('currentAbout').value;
+    this.disabled = true; this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Optimizing...';
+    try {
+        const res = await fetch('/api/optimize_profile', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({headline, about})
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('resultArea').innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Headline:</strong> ${data.data.headline}<br><br>
+                    <strong>About:</strong> ${data.data.about}<br><br>
+                    <strong>Experience:</strong> ${data.data.experience}
+                </div>
+            `;
+        }
+    } catch(e) { alert('Error connecting to server.'); }
+    this.disabled = false; this.innerHTML = '<i class="fas fa-magic"></i> Optimize with AI';
+});
+</script>
+{% endblock %}

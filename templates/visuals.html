@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h2><i class="fas fa-image text-primary"></i> Step 4: Visual Scripts</h2>
+<p class="text-muted">Generate a 3-slide whiteboard script for your carousel.</p>
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h5>Enter Post Details</h5>
+            <textarea id="postProblem" class="form-control mb-2" placeholder="Problem">Struggling to get leads</textarea>
+            <textarea id="postSolution" class="form-control mb-2" placeholder="Solution">Use my 5-step system</textarea>
+            <button id="generateVisualBtn" class="btn btn-primary w-100"><i class="fas fa-image"></i> Generate Visuals</button>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card p-3">
+            <h5>Visual Script</h5>
+            <div id="visualResult"><p class="text-muted">Your script will appear here...</p></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('generateVisualBtn').addEventListener('click', async function() {
+    const problem = document.getElementById('postProblem').value;
+    const solution = document.getElementById('postSolution').value;
+    const post_data = { problem, solution };
+    this.disabled = true; this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    try {
+        const res = await fetch('/api/generate_visual', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({post_data})
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('visualResult').innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Slide 1:</strong> ${data.data.slide_1}<br><br>
+                    <strong>Slide 2:</strong> ${data.data.slide_2}<br><br>
+                    <strong>Slide 3:</strong> ${data.data.slide_3}
+                </div>
+            `;
+        }
+    } catch(e) { alert('Error!'); }
+    this.disabled = false; this.innerHTML = '<i class="fas fa-image"></i> Generate Visuals';
+});
+</script>
+{% endblock %}
