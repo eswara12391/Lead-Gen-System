@@ -2,7 +2,7 @@ services:
   - type: web
     name: linkedin-lead-gen
     runtime: python-3.11
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1
     envVars:
       - key: WEB_CONCURRENCY
