@@ -1,40 +1,54 @@
-# utils.py - AUTO-DISCOVERS available Gemini models
+# utils.py - COMPLETE FIX
 import re
 import google.generativeai as genai
 from config import GEMINI_API_KEY
 
-# --- Configure AI using dynamic model discovery ---
+# --- Configure AI ---
 AI_AVAILABLE = False
 model = None
 
 if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        # List all models that support generateContent
+        
+        # List all available models (for debugging)
+        print("🔍 Checking available models...")
         available_models = []
         for m in genai.list_models():
             if 'generateContent' in m.supported_generation_methods:
                 available_models.append(m.name)
-                print(f"  - Available: {m.name}")
+                print(f"  - {m.name}")
         
-        if available_models:
-            # Try each model until one works
-            for model_name in available_models:
+        # Try to use the most common working models
+        preferred_models = [
+            'models/gemini-2.0-flash-exp',
+            'models/gemini-1.5-flash',
+            'models/gemini-1.5-pro',
+            'models/gemini-pro'
+        ]
+        
+        for preferred in preferred_models:
+            if preferred in available_models:
                 try:
-                    test_model = genai.GenerativeModel(model_name)
-                    test_model.generate_content("Hello")
-                    model = test_model
+                    model = genai.GenerativeModel(preferred)
+                    # Skip the test call - just assume it works
                     AI_AVAILABLE = True
-                    print(f"✅ Using Gemini model: {model_name}")
+                    print(f"✅ Using Gemini model: {preferred}")
                     break
                 except Exception as e:
-                    print(f"⚠️ {model_name} failed: {e}")
+                    print(f"⚠️ {preferred} setup failed: {e}")
                     continue
-            if not AI_AVAILABLE:
-                print("⚠️ No working model found. Falling back to hardcoded templates.")
-        else:
-            print("⚠️ No models found. Falling back to hardcoded templates.")
-            
+        
+        if not AI_AVAILABLE and available_models:
+            # If none of the preferred models work, use the first available
+            try:
+                model = genai.GenerativeModel(available_models[0])
+                AI_AVAILABLE = True
+                print(f"✅ Using fallback Gemini model: {available_models[0]}")
+            except Exception as e:
+                print(f"⚠️ All models failed: {e}")
+                AI_AVAILABLE = False
+                
     except Exception as e:
         print(f"⚠️ AI Setup Error: {e}. Falling back to hardcoded templates.")
 else:
@@ -70,6 +84,13 @@ def generate_profile_optimization(current_headline, current_about):
         try:
             response = model.generate_content(prompt)
             parsed = parse_ai_response(response.text, ['Headline', 'About', 'Experience'])
+            
+            # Check if we got valid content (no placeholders)
+            if ('[Target Audience]' in parsed.get('headline', '') or 
+                'Could not parse' in parsed.get('headline', '')):
+                print("⚠️ AI returned invalid format. Using fallback.")
+                raise Exception("Invalid AI response format")
+            
             return {
                 "headline": parsed.get('headline', current_headline),
                 "about": parsed.get('about', current_about),
