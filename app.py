@@ -32,6 +32,10 @@ def index():
 def profile_page():
     return render_template('profile.html')
 
+@app.route('/profiles')
+def profiles_page():
+    return render_template('profile.html')
+
 @app.route('/content')
 def content_page():
     return render_template('content.html')
@@ -47,6 +51,10 @@ def visuals_page():
 @app.route('/analytics')
 def analytics_page():
     return render_template('analytics.html')
+
+@app.route('/topics')
+def topics_page():
+    return render_template('content.html')
 
 # ---------- API ENDPOINTS ----------
 @app.route('/api/optimize_profile', methods=['POST'])
